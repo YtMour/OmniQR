@@ -1,0 +1,26 @@
+{
+  "name": "omniqr-uniapp",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:h5": "set UNI_INPUT_DIR=%cd%&& set VITE_ROOT_DIR=%cd%&& uni -p h5 --host 0.0.0.0 --port 48917",
+    "build:h5": "set UNI_INPUT_DIR=%cd%&& set VITE_ROOT_DIR=%cd%&& uni build -p h5",
+    "build:app": "set UNI_INPUT_DIR=%cd%&& set VITE_ROOT_DIR=%cd%&& uni build -p app",
+    "dev:app": "set UNI_INPUT_DIR=%cd%&& set VITE_ROOT_DIR=%cd%&& uni -p app"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app-plus": "3.0.0-alpha-5010220260529001",
+    "@dcloudio/uni-h5": "3.0.0-alpha-5010220260529001",
+    "@dcloudio/uni-ui": "1.5.11",
+    "qrcode-generator": "^2.0.4",
+    "vue": "^3.5.16"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.31",
+    "@dcloudio/uni-cli-shared": "3.0.0-alpha-5010220260529001",
+    "@dcloudio/uni-components": "^3.0.0-alpha-5010220260529001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5010220260529001",
+    "typescript": "^5.8.3",
+    "vite": "5.2.8"
+  }
+}

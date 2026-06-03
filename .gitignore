@@ -1,0 +1,6 @@
+*.jks
+*.keystore
+ANDROID_KEYSTORE.md
+OmniQR-Uniapp/src/
+OmniQR-Uniapp/dev-h5.*.log
+OmniQR-Uniapp/node_modules/

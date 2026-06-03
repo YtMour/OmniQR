@@ -1,0 +1,97 @@
+.app-header,
+.brand-wrap,
+.topbar,
+.section-head,
+.record-item,
+.record-card,
+.records-entry,
+.bottom-nav,
+.actions,
+.tabs {
+	display: flex;
+}
+
+.app-header,
+.topbar,
+.section-head {
+	align-items: center;
+	justify-content: space-between;
+}
+
+.brand-wrap,
+.record-item,
+.record-card,
+.records-entry,
+.bottom-nav,
+.actions,
+.tabs {
+	align-items: center;
+}
+
+.brand,
+.records-section,
+.record-list,
+.form-card,
+.preview-card,
+.card,
+.field,
+.preview,
+.record-main,
+.record-content,
+.qr-placeholder,
+.nav-item {
+	display: flex;
+	flex-direction: column;
+}
+
+.bottom-nav {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	min-height: 112rpx;
+	padding-bottom: env(safe-area-inset-bottom);
+	background: rgba(255, 255, 255, 0.98);
+	border-top: 1rpx solid #d7dee8;
+	justify-content: space-around;
+	z-index: 20;
+}
+
+.nav-item {
+	width: 140rpx;
+	height: 104rpx;
+	align-items: center;
+	justify-content: center;
+	color: #667085;
+}
+
+.nav-item.active {
+	color: #064e4a;
+}
+
+.nav-icon {
+	width: 42rpx;
+	height: 42rpx;
+}
+
+.nav-text {
+	font-size: 22rpx;
+	font-weight: 500;
+	line-height: 1.2;
+}
+
+.topbar {
+	height: 76rpx;
+}
+
+.topbar-spacer,
+.back-icon {
+	width: 64rpx;
+	height: 64rpx;
+}
+
+.topbar-title {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: #111827;
+}
