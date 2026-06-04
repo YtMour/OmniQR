@@ -1,6 +1,9 @@
 import { createQrMatrix } from './qrMatrix'
 import { getQrVisualStyle, type WatermarkCorner } from './qrStyle'
 import { getQrRenderLayout, getQrWatermarkRect, QR_EXPORT_CANVAS_SIZE } from './qrRenderGeometry'
+// #ifdef H5
+import { toPng } from 'html-to-image'
+// #endif
 
 const CANVAS_ID = 'omniqr-export-canvas'
 const CANVAS_SIZE = QR_EXPORT_CANVAS_SIZE
@@ -352,6 +355,7 @@ export function exportQrImage(content: string, owner: any, visualSeed = content)
 }
 
 export async function exportQrPreviewElementToPng(previewElement?: HTMLElement | null): Promise<string> {
+	// #ifdef H5
 	if (!isH5Runtime()) {
 		throw new Error('qr preview dom export is only available in h5')
 	}
@@ -362,12 +366,16 @@ export async function exportQrPreviewElementToPng(previewElement?: HTMLElement |
 	}
 
 	await waitForDomExportReady()
-	const { toPng } = await import('html-to-image')
 	return toPng(element, {
 		backgroundColor: window.getComputedStyle(element).backgroundColor || '#ffffff',
 		cacheBust: true,
 		pixelRatio: getExportPixelRatio(element)
 	})
+	// #endif
+
+	// #ifndef H5
+	throw new Error('qr preview dom export is only available in h5')
+	// #endif
 }
 
 export function exportQrPreviewImage(content: string, owner: any, visualSeed = content, options: QrImageSaveOptions = {}): Promise<string> {

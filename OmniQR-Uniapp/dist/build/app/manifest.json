@@ -17,6 +17,8 @@
     "url": ""
   },
   "permissions": {
+    "Barcode": {},
+    "Camera": {},
     "UniNView": {
       "description": "UniNView原生渲染"
     }
@@ -101,10 +103,9 @@
           "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
         ]
       },
-      "apple": {
-        "dSYMs": false
-      },
+      "apple": {},
       "plugins": {
+        "push": {},
         "audio": {
           "mp3": {
             "description": "Android平台录音支持MP3格式文件"
