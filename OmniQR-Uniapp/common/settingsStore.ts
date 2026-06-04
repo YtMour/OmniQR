@@ -1,11 +1,15 @@
 export type QrSizeOption = '小' | '中' | '大'
 export type AppLanguage = 'zh-Hans' | 'zh-Hant' | 'en' | 'es' | 'fr' | 'de' | 'ja' | 'ko' | 'pt-BR' | 'ru' | 'ar' | 'hi'
+export type QrThemeId = 'random' | 'geek' | 'fresh' | 'minimal' | 'business' | 'retro' | 'pop' | 'mono' | 'warm'
 
 export type OmniQrSettings = {
 	defaultRecordTitle: string
 	language: AppLanguage
 	previewImageOnSaveFail: boolean
 	qrSize: QrSizeOption
+	beautifyQr: boolean
+	qrTheme: QrThemeId
+	useFixedQrColors: boolean
 	foregroundColor: string
 	backgroundColor: string
 }
@@ -17,6 +21,9 @@ export const defaultSettings: OmniQrSettings = {
 	language: 'zh-Hans',
 	previewImageOnSaveFail: true,
 	qrSize: '中',
+	beautifyQr: true,
+	qrTheme: 'random',
+	useFixedQrColors: false,
 	foregroundColor: '#111827',
 	backgroundColor: '#ffffff'
 }

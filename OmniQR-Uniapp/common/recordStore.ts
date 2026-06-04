@@ -8,6 +8,7 @@ export type QrRecord = {
 	type: RecordType
 	content: string
 	desc: string
+	styleSeed?: string
 	favorite: boolean
 	source: RecordSource
 	createdAt: number

@@ -12,6 +12,7 @@
     "@dcloudio/uni-app-plus": "3.0.0-alpha-5010220260529001",
     "@dcloudio/uni-h5": "3.0.0-alpha-5010220260529001",
     "@dcloudio/uni-ui": "1.5.11",
+    "html-to-image": "^1.11.13",
     "qrcode-generator": "^2.0.4",
     "vue": "^3.5.16"
   },

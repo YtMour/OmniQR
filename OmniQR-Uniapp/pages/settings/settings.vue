@@ -31,7 +31,36 @@
 				<picker :range="qrSizeLabels" :value="qrSizeIndex" @change="onQrSizeChange">
 					<view class="picker">{{ qrSizeLabels[qrSizeIndex] }}</view>
 				</picker>
-				<text class="hint">{{ t('qrSizeHint') }}</text>
+			</view>
+			<view class="setting-row">
+				<view class="setting-copy">
+					<text class="label">{{ t('beautifyQr') }}</text>
+					<text class="hint">{{ t('beautifyQrHint') }}</text>
+				</view>
+				<switch :checked="settings.beautifyQr" color="#0f766e" @change="onBeautifyQrChange" />
+			</view>
+			<view class="field">
+				<text class="label">{{ t('qrTheme') }}</text>
+				<picker :range="qrThemeLabels" :value="qrThemeIndex" @change="onQrThemeChange">
+					<view class="picker">{{ qrThemeLabels[qrThemeIndex] }}</view>
+				</picker>
+				<text class="hint">{{ t('qrThemeHint') }}</text>
+			</view>
+			<view class="setting-row">
+				<view class="setting-copy">
+					<text class="label">{{ t('useFixedQrColors') }}</text>
+					<text class="hint">{{ t('useFixedQrColorsHint') }}</text>
+				</view>
+				<switch :checked="settings.useFixedQrColors" color="#0f766e" @change="onFixedColorChange" />
+			</view>
+			<view class="field">
+				<text class="label">{{ t('foregroundColor') }}</text>
+				<input class="input" v-model="settings.foregroundColor" placeholder="#111827" />
+			</view>
+			<view class="field">
+				<text class="label">{{ t('backgroundColor') }}</text>
+				<input class="input" v-model="settings.backgroundColor" placeholder="#ffffff" />
+				<text class="hint">{{ t('qrStyleHint') }}</text>
 			</view>
 			<button class="primary-button" @tap="save">{{ t('saveSettings') }}</button>
 		</view>
@@ -43,6 +72,7 @@
 				<text class="stats-sub">{{ favoriteCount }} {{ t('favoriteCountSuffix') }}</text>
 			</view>
 			<button class="ghost-button" @tap="exportData">{{ t('exportJson') }}</button>
+			<button class="ghost-button" @tap="importData">{{ t('importJson') }}</button>
 			<button class="ghost-button" @tap="clearNonFavorites">{{ t('clearNonFavorites') }}</button>
 			<button class="danger-button" @tap="clearAllRecords">{{ t('clearAllRecords') }}</button>
 		</view>
@@ -60,6 +90,8 @@
 	import { defaultSettings, getSettings, resetSettings, saveSettings, type OmniQrSettings, type QrSizeOption } from '../../common/settingsStore'
 	import { languageOptions, setLanguage, t, type I18nKey } from '../../common/i18n'
 	import { listRecords, type QrRecord } from '../../common/recordStore'
+	import { createBackupJson, downloadJsonFile, importBackupJson } from '../../common/dataBackup'
+	import { qrThemeOptions } from '../../common/qrStyle'
 
 	const RECORDS_KEY = 'omniqr_records'
 
@@ -70,6 +102,7 @@
 				settings: { ...defaultSettings } as OmniQrSettings,
 				activeLanguage: defaultSettings.language,
 				qrSizes: ['小', '中', '大'] as QrSizeOption[],
+				qrThemeOptions,
 				languageOptions,
 				i18nVersion: 0,
 				recordCount: 0,
@@ -105,6 +138,14 @@
 			},
 			languageIndex() {
 				return Math.max(0, this.languageOptions.findIndex((option) => option.value === this.settings.language))
+			},
+			qrThemeIndex() {
+				return Math.max(0, this.qrThemeOptions.findIndex((option) => option.value === this.settings.qrTheme))
+			},
+			qrThemeLabels() {
+				this.activeLanguage
+				this.i18nVersion
+				return this.qrThemeOptions.map((option) => t(option.labelKey as I18nKey))
 			}
 		},
 		methods: {
@@ -133,11 +174,22 @@
 			onQrSizeChange(event: { detail: { value: string | number } }) {
 				this.settings.qrSize = this.qrSizes[Number(event.detail.value)]
 			},
+			onBeautifyQrChange(event: { detail: { value: boolean } }) {
+				this.settings.beautifyQr = event.detail.value
+			},
+			onQrThemeChange(event: { detail: { value: string | number } }) {
+				this.settings.qrTheme = this.qrThemeOptions[Number(event.detail.value)].value
+			},
+			onFixedColorChange(event: { detail: { value: boolean } }) {
+				this.settings.useFixedQrColors = event.detail.value
+			},
 			onLanguageChange(event: { detail: { value: string | number } }) {
 				this.settings.language = this.languageOptions[Number(event.detail.value)].value
 			},
 			save() {
 				this.settings.defaultRecordTitle = this.settings.defaultRecordTitle.trim()
+				this.settings.foregroundColor = this.normalizeColor(this.settings.foregroundColor, defaultSettings.foregroundColor)
+				this.settings.backgroundColor = this.normalizeColor(this.settings.backgroundColor, defaultSettings.backgroundColor)
 				this.settings = saveSettings(this.settings)
 				setLanguage(this.settings.language)
 				this.settings = getSettings()
@@ -155,24 +207,51 @@
 					icon: 'success'
 				})
 			},
+			normalizeColor(color: string, fallback: string) {
+				return /^#[0-9a-f]{6}$/i.test(color) ? color : fallback
+			},
 			refreshStats() {
 				const records = listRecords()
 				this.recordCount = records.length
 				this.favoriteCount = records.filter((record) => record.favorite).length
 			},
 			exportData() {
-				const data = JSON.stringify({
-					exportedAt: new Date().toISOString(),
-					settings: getSettings(),
-					records: listRecords()
-				}, null, 2)
+				const data = createBackupJson()
 				uni.setClipboardData({
 					data,
 					success: () => {
+						downloadJsonFile(`omniqr-backup-${Date.now()}.json`, data)
 						uni.showToast({
 							title: t('jsonCopied'),
 							icon: 'success'
 						})
+					}
+				})
+			},
+			importData() {
+				uni.showModal({
+					title: t('importJson'),
+					editable: true,
+					placeholderText: t('importJsonPlaceholder'),
+					confirmText: t('import'),
+					success: (res) => {
+						if (!res.confirm) {
+							return
+						}
+						try {
+							const result = importBackupJson(res.content || '')
+							this.settings = getSettings()
+							this.refreshStats()
+							uni.showToast({
+								title: `${t('imported')}${result.imported}，${t('skipped')}${result.skipped}`,
+								icon: 'none'
+							})
+						} catch (_error) {
+							uni.showToast({
+								title: t('importFailed'),
+								icon: 'none'
+							})
+						}
 					}
 				})
 			},

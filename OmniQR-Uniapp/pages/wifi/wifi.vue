@@ -60,7 +60,7 @@
 
 <script lang="ts">
 	import { addRecord } from '../../common/recordStore'
-	import { exportQrImage, QR_EXPORT_CANVAS_ID, saveQrImageToAlbum } from '../../common/qrExport'
+	import { downloadQrImageFile, exportQrPreviewImage, QR_EXPORT_CANVAS_ID, saveQrImageToAlbum } from '../../common/qrExport'
 	import { getSettings } from '../../common/settingsStore'
 	import { t } from '../../common/i18n'
 	import QrPreview from '../../components/QrPreview.vue'
@@ -166,6 +166,7 @@
 					title: this.title.trim() || settings.defaultRecordTitle || this.ssid.trim() || t('wifiDefaultTitle'),
 					type: 'WiFi',
 					content: this.generatedContent,
+					styleSeed: this.watermarkSeed || this.generatedContent,
 					desc: `${this.ssid.trim()} · ${this.encryptions[this.encryptionIndex]}${this.hidden ? ` · ${t('hiddenNetwork')}` : ''}`
 				})
 				if (showToast) {
@@ -195,7 +196,7 @@
 					})
 					return
 				}
-				saveQrImageToAlbum(this.generatedContent, this)
+				saveQrImageToAlbum(this.generatedContent, this, this.watermarkSeed, `omniqr-wifi-${Date.now()}.png`)
 					.then(() => {
 						uni.showToast({
 							title: t('savedAlbum'),
@@ -214,8 +215,9 @@
 					})
 			},
 			previewExportedImage() {
-				exportQrImage(this.generatedContent, this)
+				exportQrPreviewImage(this.generatedContent, this, this.watermarkSeed)
 					.then((tempFilePath: string) => {
+						downloadQrImageFile(`omniqr-wifi-${Date.now()}.png`, tempFilePath)
 						uni.previewImage({
 							urls: [tempFilePath],
 							current: tempFilePath

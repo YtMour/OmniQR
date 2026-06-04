@@ -67,7 +67,7 @@
 
 <script lang="ts">
 	import { addRecord } from '../../common/recordStore'
-	import { exportQrImage, QR_EXPORT_CANVAS_ID, saveQrImageToAlbum } from '../../common/qrExport'
+	import { downloadQrImageFile, exportQrPreviewImage, QR_EXPORT_CANVAS_ID, saveQrImageToAlbum } from '../../common/qrExport'
 	import { getSettings } from '../../common/settingsStore'
 	import { t } from '../../common/i18n'
 	import QrPreview from '../../components/QrPreview.vue'
@@ -181,6 +181,7 @@
 					title: this.recordTitle.trim() || settings.defaultRecordTitle || `${this.form.name.trim()}${t('contactTitleSuffix')}`,
 					type: '名片',
 					content: this.generatedContent,
+					styleSeed: this.watermarkSeed || this.generatedContent,
 					desc: [this.form.company.trim(), this.form.title.trim(), this.form.phone.trim()].filter(Boolean).join(' · ') || this.form.name.trim()
 				})
 				if (showToast) {
@@ -210,7 +211,7 @@
 					})
 					return
 				}
-				saveQrImageToAlbum(this.generatedContent, this)
+				saveQrImageToAlbum(this.generatedContent, this, this.watermarkSeed, `omniqr-contact-${Date.now()}.png`)
 					.then(() => {
 						uni.showToast({
 							title: t('savedAlbum'),
@@ -229,8 +230,9 @@
 					})
 			},
 			previewExportedImage() {
-				exportQrImage(this.generatedContent, this)
+				exportQrPreviewImage(this.generatedContent, this, this.watermarkSeed)
 					.then((tempFilePath: string) => {
+						downloadQrImageFile(`omniqr-contact-${Date.now()}.png`, tempFilePath)
 						uni.previewImage({
 							urls: [tempFilePath],
 							current: tempFilePath

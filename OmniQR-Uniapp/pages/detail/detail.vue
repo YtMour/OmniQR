@@ -21,7 +21,19 @@
 			</view>
 
 			<view class="qr-panel">
-				<QrPreview :content="record.content" />
+				<QrPreview :content="record.content" :watermarkSeed="exportSeed" />
+			</view>
+
+			<view v-if="structuredFields.length" class="content-panel">
+				<view class="content-head">
+					<text class="content-title">{{ t('structuredInfo') }}</text>
+				</view>
+				<view class="field-list">
+					<view v-for="field in structuredFields" :key="field.label" class="field-row">
+						<text class="field-label">{{ field.label }}</text>
+						<text class="field-value">{{ field.value }}</text>
+					</view>
+				</view>
 			</view>
 
 			<view class="content-panel">
@@ -34,7 +46,10 @@
 
 			<button class="primary-button" @tap="regenerate">{{ t('regenerate') }}</button>
 			<view class="actions">
+				<button class="ghost-button" @tap="saveQrImage">{{ t('saveQrImage') }}</button>
 				<button class="ghost-button" @tap="copyContent">{{ t('copyContent') }}</button>
+			</view>
+			<view class="actions">
 				<button class="ghost-button" @tap="toggleCurrentFavorite">{{ record.favorite ? t('unfavorite') : t('favorite') }}</button>
 			</view>
 			<button class="danger-button" @tap="removeRecord">{{ t('deleteRecord') }}</button>
@@ -46,12 +61,17 @@
 			<text class="empty-desc">{{ t('recordNotFoundDesc') }}</text>
 			<button class="primary-button" @tap="goRecords">{{ t('backRecords') }}</button>
 		</view>
+
+		<canvas :canvas-id="exportCanvasId" :id="exportCanvasId" class="export-canvas"></canvas>
 	</view>
 </template>
 
 <script lang="ts">
 	import { deleteRecord, getRecord, toggleFavorite, type QrRecord } from '../../common/recordStore'
 	import { recordTypeLabel, t } from '../../common/i18n'
+	import { getStructuredFields } from '../../common/recordParsers'
+	import { downloadQrImageFile, exportQrPreviewImage, QR_EXPORT_CANVAS_ID, saveQrImageToAlbum } from '../../common/qrExport'
+	import { getSettings } from '../../common/settingsStore'
 	import QrPreview from '../../components/QrPreview.vue'
 
 	export default {
@@ -62,7 +82,8 @@
 			return {
 				safeTop: 48,
 				recordId: '',
-				record: null as QrRecord | null
+				record: null as QrRecord | null,
+				exportCanvasId: QR_EXPORT_CANVAS_ID
 			}
 		},
 		onLoad(query: { id?: string }) {
@@ -106,6 +127,12 @@
 					}
 				}
 				return map[type] || map['文本']
+			},
+			structuredFields() {
+				return this.record ? getStructuredFields(this.record.type, this.record.content) : []
+			},
+			exportSeed() {
+				return this.record ? this.record.styleSeed || this.record.content : ''
 			}
 		},
 		methods: {
@@ -137,6 +164,53 @@
 				uni.setClipboardData({
 					data: this.record.content
 				})
+			},
+			saveQrImage() {
+				if (!this.record) {
+					return
+				}
+				saveQrImageToAlbum(this.record.content, this, this.exportSeed, `omniqr-record-${Date.now()}.png`)
+					.then(() => {
+						uni.showToast({
+							title: t('savedAlbum'),
+							icon: 'success'
+						})
+					})
+					.catch(() => {
+						if (getSettings().previewImageOnSaveFail) {
+							this.previewExportedImage()
+							return
+						}
+						uni.showToast({
+							title: t('saveImageFailed'),
+							icon: 'none'
+						})
+					})
+			},
+			previewExportedImage() {
+				if (!this.record) {
+					return
+				}
+				exportQrPreviewImage(this.record.content, this, this.exportSeed)
+					.then((tempFilePath: string) => {
+						downloadQrImageFile(`omniqr-record-${Date.now()}.png`, tempFilePath)
+						uni.previewImage({
+							urls: [tempFilePath],
+							current: tempFilePath,
+							fail: () => {
+								uni.showToast({
+									title: t('generatedImageAppTip'),
+									icon: 'none'
+								})
+							}
+						})
+					})
+					.catch(() => {
+						uni.showToast({
+							title: t('saveImageFailed'),
+							icon: 'none'
+						})
+					})
 			},
 			regenerate() {
 				if (!this.record) {
@@ -330,6 +404,36 @@
 		white-space: pre-wrap;
 	}
 
+	.field-list {
+		display: flex;
+		flex-direction: column;
+		gap: 14rpx;
+	}
+
+	.field-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 18rpx;
+	}
+
+	.field-label {
+		width: 148rpx;
+		flex-shrink: 0;
+		font-size: 24rpx;
+		line-height: 1.45;
+		color: #667085;
+	}
+
+	.field-value {
+		flex: 1;
+		min-width: 0;
+		font-size: 26rpx;
+		line-height: 1.45;
+		color: #18202c;
+		word-break: break-all;
+		white-space: pre-wrap;
+	}
+
 	.primary-button,
 	.ghost-button,
 	.danger-button {
@@ -402,5 +506,14 @@
 		margin-top: 8rpx;
 		font-size: 24rpx;
 		color: #667085;
+	}
+
+	.export-canvas {
+		position: fixed;
+		left: -9999px;
+		top: -9999px;
+		width: 720px;
+		height: 720px;
+		pointer-events: none;
 	}
 </style>
